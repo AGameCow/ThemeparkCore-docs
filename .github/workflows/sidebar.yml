@@ -1,0 +1,34 @@
+name: Auto-update Sidebar
+
+on:
+  push:
+    branches:
+      - master
+      - main
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout wiki repo
+        uses: actions/checkout@v4
+
+      - name: Generate _Sidebar.md
+        run: |
+          echo "# Sidebar" > _Sidebar.md
+          for f in *.md; do
+            if [[ "$f" != "_Sidebar.md" && "$f" != "_Footer.md" ]]; then
+              title=$(basename "$f" .md)
+              title=${title//_/ }   # underscores → spaties
+              echo "- [${title}](${title})" >> _Sidebar.md
+            fi
+          done
+
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add _Sidebar.md
+          git commit -m "Auto-update sidebar" || echo "No changes"
+          git push
